@@ -1,26 +1,47 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap");
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ff-bg: #FAF9FD;
+  --ff-fg: #1D1B22;
+  --ff-muted: #75717F;
+  --ff-accent: #6E5CE6;
+  --ff-yellow: #FFC24B;
+  --ff-border: #EBE8F2;
+  --ff-surface: #FFFFFF;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--ff-bg);
+  --color-foreground: var(--ff-fg);
+  --color-muted: var(--ff-muted);
+  --color-accent: var(--ff-accent);
+  --color-yellow: var(--ff-yellow);
+  --color-border: var(--ff-border);
+  --color-surface: var(--ff-surface);
+  --font-heading: "Zen Maru Gothic", sans-serif;
+  --font-body: "Zen Kaku Gothic New", sans-serif;
+  --font-sans: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ff-bg);
+  color: var(--ff-fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
