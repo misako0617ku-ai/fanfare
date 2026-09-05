@@ -77,8 +77,39 @@ export default function HomeFeed({
         return;
       }
       query = query.in("user_id", followeeIds);
+    } else if (activeTab === "discover") {
+      // Use the discover_feed SQL function for equal artist distribution
+      const { data: discoverData } = await (supabase as any).rpc("discover_feed", {
+        p_user_id: userId,
+        p_limit_per_artist: 3,
+        p_days: 14,
+      });
+      if (!discoverData) { setLoading(false); return; }
+      // Fetch stamps for discover posts
+      const discoverIds = (discoverData as any[]).map((p: any) => p.id);
+      const { data: stamps } = await supabase
+        .from("post_stamps")
+        .select("post_id, stamp_id, user_id")
+        .in("post_id", discoverIds);
+      const { data: fullPosts } = await supabase
+        .from("posts")
+        .select("*, users(id, nickname, icon_url), post_artists(artists(id, name))")
+        .in("id", discoverIds);
+      const stampMap: Record<string, { counts: Record<string, number>; mine: string[] }> = {};
+      for (const ps of stamps ?? []) {
+        if (!stampMap[ps.post_id]) stampMap[ps.post_id] = { counts: {}, mine: [] };
+        stampMap[ps.post_id].counts[ps.stamp_id] = (stampMap[ps.post_id].counts[ps.stamp_id] ?? 0) + 1;
+        if (ps.user_id === userId) stampMap[ps.post_id].mine.push(ps.stamp_id);
+      }
+      const withCounts = (fullPosts ?? []).map((p: any) => ({
+        ...p,
+        stamp_counts: stampMap[p.id]?.counts ?? {},
+        my_stamps: stampMap[p.id]?.mine ?? [],
+      }));
+      setPosts(withCounts);
+      setLoading(false);
+      return;
     }
-    // discover: no additional filter — handled below with grouping
 
     const { data } = await query;
     if (!data) { setLoading(false); return; }
