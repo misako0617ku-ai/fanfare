@@ -22,11 +22,11 @@ export default async function CommunitiesPage() {
       <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--ff-border)" }}>
         <h1 className="text-base font-bold">コミュニティ</h1>
         <Link
-          href="/communities/new"
-          className="text-sm font-medium px-3 py-1.5 rounded-full text-white"
-          style={{ background: "var(--ff-accent)", borderRadius: "9999px" }}
+          href="/communities/join"
+          className="text-sm px-3 py-1.5 rounded-full"
+          style={{ color: "var(--ff-muted)", border: "1px solid var(--ff-border)" }}
         >
-          作成する
+          IDで参加
         </Link>
       </div>
 

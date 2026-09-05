@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PostCard from "@/components/post/PostCard";
 import NewCommunityPost from "./NewCommunityPost";
+import CommunityInvite from "./CommunityInvite";
 
 interface Community {
   id: string;
@@ -17,14 +17,12 @@ interface Community {
 
 export default function CommunityView({
   community,
-  posts,
   memberCount,
   isMember: initialMember,
   isModOrOwner,
   currentUserId,
 }: {
   community: Community;
-  posts: any[];
   memberCount: number;
   isMember: boolean;
   isModOrOwner: boolean;
@@ -34,7 +32,36 @@ export default function CommunityView({
   const [isMember, setIsMember] = useState(initialMember);
   const [count, setCount] = useState(memberCount);
   const [showPost, setShowPost] = useState(false);
-  const [localPosts, setLocalPosts] = useState(posts);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  async function loadPosts() {
+    setLoading(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("posts")
+      .select("*, users!posts_user_id_fkey(id, nickname, icon_url), post_artists(artists(id, name)), post_stamps(stamp_id, user_id)")
+      .eq("community_id", community.id)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    const withCounts = (data ?? []).map((p: any) => {
+      const stamps: Record<string, number> = {};
+      const myStamps: string[] = [];
+      for (const ps of p.post_stamps ?? []) {
+        stamps[ps.stamp_id] = (stamps[ps.stamp_id] ?? 0) + 1;
+        if (ps.user_id === currentUserId) myStamps.push(ps.stamp_id);
+      }
+      return { ...p, stamp_counts: stamps, my_stamps: myStamps };
+    });
+    setPosts(withCounts);
+    setLoading(false);
+  }
 
   async function toggleMember() {
     const supabase = createClient();
@@ -55,7 +82,6 @@ export default function CommunityView({
       setIsMember(true);
       setCount((n) => n + 1);
     }
-    router.refresh();
   }
 
   return (
@@ -64,7 +90,10 @@ export default function CommunityView({
       <div className="px-4 py-4" style={{ borderBottom: "1px solid var(--ff-border)" }}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-base font-bold">{community.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold">{community.name}</h1>
+              <CommunityInvite communityId={community.id} />
+            </div>
             {community.artists && (
               <p className="text-xs mt-0.5" style={{ color: "var(--ff-muted)" }}>
                 {community.artists.name}
@@ -107,26 +136,28 @@ export default function CommunityView({
         <div style={{ borderBottom: "1px solid var(--ff-border)" }}>
           <NewCommunityPost
             communityId={community.id}
-            onPosted={() => { setShowPost(false); router.refresh(); }}
+            onPosted={() => { setShowPost(false); loadPosts(); }}
           />
         </div>
       )}
 
       {/* Posts */}
-      {localPosts.length === 0 ? (
+      {loading ? (
         <div className="flex justify-center py-16">
-          <p className="text-sm" style={{ color: "var(--ff-muted)" }}>
-            まだ投稿がありません
-          </p>
+          <span className="text-sm" style={{ color: "var(--ff-muted)" }}>読み込み中...</span>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="flex justify-center py-16">
+          <p className="text-sm" style={{ color: "var(--ff-muted)" }}>まだ投稿がありません</p>
         </div>
       ) : (
         <div>
-          {localPosts.map((post) => (
+          {posts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
               currentUserId={currentUserId}
-              onStampToggle={() => {}}
+              onStampToggle={loadPosts}
             />
           ))}
         </div>

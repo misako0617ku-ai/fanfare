@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import PostCard from "./PostCard";
+import EventTicker from "@/components/home/EventTicker";
 import type { Tables } from "@/types/database";
 
 type Tab = "oshi" | "follow" | "discover";
@@ -36,7 +37,7 @@ export default function HomeFeed({
     let query = supabase
       .from("posts")
       .select(
-        `*, users(id, nickname, icon_url), post_artists(artists(id, name)), post_stamps(stamp_id, user_id)`
+        `*, users!posts_user_id_fkey(id, nickname, icon_url), post_artists(artists(id, name)), post_stamps(stamp_id, user_id)`
       )
       .eq("status", "published")
       .eq("scope", "home")
@@ -44,27 +45,7 @@ export default function HomeFeed({
       .limit(30);
 
     if (activeTab === "oshi") {
-      const { data: oshi } = await supabase
-        .from("user_oshi")
-        .select("artist_id")
-        .eq("user_id", userId);
-      const artistIds = (oshi ?? []).map((o) => o.artist_id);
-      if (artistIds.length === 0) {
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
-      const { data: postIds } = await supabase
-        .from("post_artists")
-        .select("post_id")
-        .in("artist_id", artistIds);
-      const ids = (postIds ?? []).map((p) => p.post_id);
-      if (ids.length === 0) {
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
-      query = query.in("id", ids);
+      // ホームに投稿されたものはすべて表示（タグ不要）
     } else if (activeTab === "follow") {
       const { data: follows } = await supabase
         .from("follows")
@@ -136,6 +117,9 @@ export default function HomeFeed({
 
   return (
     <div>
+      {/* Event Ticker */}
+      <EventTicker userId={userId} />
+
       {/* Tabs */}
       <div
         className="sticky top-12 z-30 flex border-b"
@@ -183,7 +167,7 @@ export default function HomeFeed({
 
 function EmptyState({ tab }: { tab: Tab }) {
   const messages: Record<Tab, string> = {
-    oshi: "推しを登録すると、ここに情報が集まります",
+    oshi: "最初のファンファーレを鳴らしてみませんか",
     follow: "フォローしているユーザーの投稿がここに表示されます",
     discover: "最初のファンファーレを鳴らしてみませんか",
   };

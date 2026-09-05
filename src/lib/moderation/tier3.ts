@@ -1,6 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+function getGenAI() {
+  if (!process.env.GEMINI_API_KEY) return null;
+  return new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+}
 
 export type ModerationTarget =
   | "self"
@@ -46,6 +49,10 @@ export async function runTier3(
   text: string,
   imageBase64?: string
 ): Promise<ModerationResult> {
+  const genAI = getGenAI();
+  if (!genAI) {
+    return { verdict: "grey" as const, target: "self" as const, intent: "sharing" as const, score: 0, reason: "Gemini APIキー未設定。要確認。" };
+  }
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",
     generationConfig: {

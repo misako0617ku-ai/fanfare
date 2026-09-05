@@ -8,9 +8,7 @@ export default async function HomePage({
 }) {
   const { tab = "oshi" } = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   return <HomeFeed userId={user!.id} activeTab={tab as "oshi" | "follow" | "discover"} />;
 }

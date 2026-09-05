@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/layout/LogoutButton";
+import PostFab from "@/components/layout/PostFab";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -42,14 +43,18 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
       <main className="flex-1 pb-20">{children}</main>
 
+      {/* FAB */}
+      <PostFab />
+
       {/* Bottom navigation */}
       <nav
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] border-t flex"
         style={{ background: "var(--ff-bg)", borderColor: "var(--ff-border)" }}
       >
         <NavItem href="/home" label="ホーム" icon="🏠" />
-        <NavItem href="/post/new" label="投稿する" icon="✍️" />
         <NavItem href="/communities" label="コミュニティ" icon="👥" />
+        <NavItem href="/communities/new" label="作成する" icon="➕" />
+        <NavItem href={`/profile/${user.id}`} label="マイページ" icon="👤" />
       </nav>
     </div>
   );

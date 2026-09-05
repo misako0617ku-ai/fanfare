@@ -21,8 +21,8 @@ security invoker
 stable
 as $$
   select
-    p.id, p.user_id, p.body, p.scope, p.community_id,
-    p.status, p.review_flag, p.ai_score, p.ai_reason, p.created_at
+    id, user_id, body, scope, community_id,
+    status, review_flag, ai_score, ai_reason, created_at
   from (
     select
       p.*,
@@ -38,7 +38,6 @@ as $$
       p.status = 'published'
       and p.scope = 'home'
       and p.created_at > now() - (p_days || ' days')::interval
-      -- ブロック除外
       and not exists (
         select 1 from public.blocks b
         where (b.blocker_id = p_user_id and b.blocked_id = p.user_id)

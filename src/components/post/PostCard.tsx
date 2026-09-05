@@ -23,6 +23,7 @@ export default function PostCard({
   currentUserId: string;
   onStampToggle: () => void;
 }) {
+  const user = post.users ?? { id: "", nickname: "不明", icon_url: null };
   const artists = post.post_artists.map((pa) => pa.artists);
 
   return (
@@ -32,16 +33,16 @@ export default function PostCard({
     >
       {/* Author */}
       <div className="flex items-center gap-2 mb-2">
-        <Link href={`/profile/${post.users.id}`}>
-          <Avatar nickname={post.users.nickname} iconUrl={post.users.icon_url} />
+        <Link href={`/profile/${user.id}`}>
+          <Avatar nickname={user.nickname} iconUrl={user.icon_url} />
         </Link>
         <div className="flex flex-col min-w-0">
           <Link
-            href={`/profile/${post.users.id}`}
+            href={`/profile/${user.id}`}
             className="text-sm font-medium truncate"
             style={{ color: "var(--ff-fg)" }}
           >
-            {post.users.nickname}
+            {user.nickname}
           </Link>
           <span className="text-xs" style={{ color: "var(--ff-muted)" }}>
             {formatRelativeTime(post.created_at)}

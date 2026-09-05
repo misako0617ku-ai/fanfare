@@ -53,12 +53,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
   const artists = (oshi ?? []).flatMap((o: any) => o.artists ? [o.artists] : []);
   const postsWithCounts = (posts ?? []).map((p: any) => {
     const stamps: Record<string, number> = {};
+    // profileページはuser情報をprofileから補完する
     const myStamps: string[] = [];
     for (const ps of p.post_stamps ?? []) {
       stamps[ps.stamp_id] = (stamps[ps.stamp_id] ?? 0) + 1;
       if (currentUser && ps.user_id === currentUser.id) myStamps.push(ps.stamp_id);
     }
-    return { ...p, stamp_counts: stamps, my_stamps: myStamps };
+    return { ...p, users: profile, stamp_counts: stamps, my_stamps: myStamps };
   });
 
   return (
