@@ -44,20 +44,16 @@ export default function EventTicker({ userId }: { userId: string }) {
   async function loadEvents() {
     const supabase = createClient();
 
-    // 今日から7日以内のイベントを全アーティスト分取得
+    // 今日以降の直近イベントを最大20件取得
     const today = new Date().toISOString().split("T")[0];
-    const week = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
 
     const { data } = await supabase
       .from("events")
       .select("id, title, event_date, type, source_url, artists(name)")
       .eq("status", "published")
       .gte("event_date", today)
-      .lte("event_date", week)
       .order("event_date", { ascending: true })
-      .limit(30);
+      .limit(20);
     setEvents((data ?? []) as TickerEvent[]);
   }
 
@@ -70,7 +66,10 @@ export default function EventTicker({ userId }: { userId: string }) {
   );
 
   const label =
-    daysUntil === 0 ? "今日" : daysUntil === 1 ? "明日" : `${daysUntil}日後`;
+    daysUntil === 0 ? "今日" :
+    daysUntil === 1 ? "明日" :
+    daysUntil <= 7 ? `${daysUntil}日後` :
+    `${ev.event_date.slice(5, 7)}月開催`;
 
   const content = (
     <div
