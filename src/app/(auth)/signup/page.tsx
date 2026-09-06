@@ -14,6 +14,7 @@ export default function SignupPage() {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   function getAgeFromBirthdate(dateStr: string): number {
     const birth = new Date(dateStr);
@@ -57,8 +58,32 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/home");
-    router.refresh();
+    setEmailSent(true);
+    setLoading(false);
+  }
+
+  if (emailSent) {
+    return (
+      <div className="flex flex-col items-center gap-4 text-center py-4">
+        <div className="text-5xl">📩</div>
+        <h2 className="text-lg font-bold">メールを確認してください</h2>
+        <p className="text-sm" style={{ color: "var(--ff-muted)" }}>
+          <strong>{email}</strong> に確認メールを送りました。
+          <br />
+          メール内の「Confirm your email address」ボタンをクリックすると登録が完了します。
+        </p>
+        <p className="text-xs mt-2" style={{ color: "var(--ff-muted)" }}>
+          メールが届かない場合は迷惑メールフォルダもご確認ください
+        </p>
+        <Link
+          href="/login"
+          className="mt-2 text-sm font-medium"
+          style={{ color: "var(--ff-accent)" }}
+        >
+          ログインページへ
+        </Link>
+      </div>
+    );
   }
 
   return (
