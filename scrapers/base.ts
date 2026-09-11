@@ -1,5 +1,11 @@
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
+import { WebSocket } from "ws";
+
+// Node.js環境でWebSocketを補完（Supabase realtimeが必要とするため）
+if (typeof globalThis.WebSocket === "undefined") {
+  (globalThis as any).WebSocket = WebSocket;
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
