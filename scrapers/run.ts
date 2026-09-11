@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { config } from "dotenv";
+config({ path: ".env.local" });
 import { createClient } from "@supabase/supabase-js";
 import { scrapeTarget, sleep, INTER_SITE_DELAY_MS } from "./base";
 import { parseStartoLivePage, setArtistIdMap } from "./starto";
