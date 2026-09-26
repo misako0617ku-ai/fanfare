@@ -92,7 +92,7 @@ export async function scrapeTarget(siteKey: string, url: string, parse: ParseFn)
         source: "scrape",
         status: "published",
       },
-      { onConflict: "artist_id,event_date,title" }
+      { onConflict: "artist_id,event_date,title", ignoreDuplicates: true }
     );
     if (error) console.error(`[${siteKey}] upsert error:`, error.message);
     else saved++;

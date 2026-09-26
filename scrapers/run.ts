@@ -119,7 +119,7 @@ async function main() {
                 source: "scrape",
                 status: "published",
               },
-              { onConflict: "artist_id,event_date,title" }
+              { onConflict: "artist_id,event_date,title", ignoreDuplicates: true }
             );
             if (error) console.error(`[EBIDAN] upsert error:`, error.message);
           }
@@ -155,7 +155,7 @@ async function main() {
                 source: "scrape",
                 status: "published",
               },
-              { onConflict: "artist_id,event_date,title" }
+              { onConflict: "artist_id,event_date,title", ignoreDuplicates: true }
             );
             if (error) console.error(`[${target.site_name}] upsert error:`, error.message);
           }
