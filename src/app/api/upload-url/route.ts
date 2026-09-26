@@ -23,10 +23,10 @@ export async function POST(req: NextRequest) {
   entry.count++;
   RATE_LIMIT.set(user.id, entry);
 
-  const { mimeType, sizeBytes } = await req.json();
+  const { mimeType, sizeBytes, prefix } = await req.json();
 
   try {
-    const result = await createUploadPresignedUrl(mimeType, sizeBytes);
+    const result = await createUploadPresignedUrl(mimeType, sizeBytes, prefix ?? "media");
     return NextResponse.json(result);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });

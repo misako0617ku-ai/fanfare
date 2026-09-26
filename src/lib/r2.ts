@@ -37,13 +37,18 @@ export function validateMediaUpload(mimeType: string, sizeBytes: number): MediaT
   throw new Error("対応していないファイル形式です");
 }
 
+export function getPublicUrl(key: string): string {
+  return `${process.env.R2_PUBLIC_URL}/${key}`;
+}
+
 export async function createUploadPresignedUrl(
   mimeType: string,
-  sizeBytes: number
-): Promise<{ url: string; key: string; mediaType: MediaType }> {
+  sizeBytes: number,
+  prefix: string = "media"
+): Promise<{ url: string; key: string; mediaType: MediaType; publicUrl: string }> {
   const mediaType = validateMediaUpload(mimeType, sizeBytes);
   const ext = mimeType.split("/")[1].replace("jpeg", "jpg");
-  const key = `media/${uuidv4()}.${ext}`;
+  const key = `${prefix}/${uuidv4()}.${ext}`;
 
   const url = await getSignedUrl(
     client,
@@ -56,7 +61,7 @@ export async function createUploadPresignedUrl(
     { expiresIn: 300 } // 5 minutes
   );
 
-  return { url, key, mediaType };
+  return { url, key, mediaType, publicUrl: getPublicUrl(key) };
 }
 
 export async function createViewPresignedUrl(key: string): Promise<string> {

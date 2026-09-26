@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -25,10 +25,14 @@ export default function ProfileEditForm({
 }) {
   const router = useRouter();
   const [nickname, setNickname] = useState(initialNickname);
+  const [iconUrl, setIconUrl] = useState<string | null>(initialIconUrl);
+  const [iconPreview, setIconPreview] = useState<string | null>(initialIconUrl);
+  const [iconFile, setIconFile] = useState<File | null>(null);
   const [oshiIds, setOshiIds] = useState<string[]>(initialOshiIds);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const agencies = Array.from(new Set(allArtists.map((a) => a.agency ?? "その他")));
   const filtered = query
@@ -41,6 +45,30 @@ export default function ProfileEditForm({
     );
   }
 
+  function handleIconChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setError("画像ファイルを選択してください"); return; }
+    if (file.size > 5 * 1024 * 1024) { setError("アイコン画像は5MB以内にしてください"); return; }
+    setError(null);
+    setIconFile(file);
+    setIconPreview(URL.createObjectURL(file));
+    e.target.value = "";
+  }
+
+  async function uploadIcon(): Promise<string | null> {
+    if (!iconFile) return iconUrl;
+    const res = await fetch("/api/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mimeType: iconFile.type, sizeBytes: iconFile.size, prefix: "avatars" }),
+    });
+    const { url, publicUrl, error: urlError } = await res.json();
+    if (urlError) throw new Error(urlError);
+    await fetch(url, { method: "PUT", body: iconFile, headers: { "Content-Type": iconFile.type } });
+    return publicUrl;
+  }
+
   async function handleSave() {
     if (!nickname.trim()) { setError("ニックネームを入力してください"); return; }
     setLoading(true);
@@ -48,14 +76,22 @@ export default function ProfileEditForm({
 
     const supabase = createClient();
 
+    let newIconUrl = iconUrl;
+    try {
+      newIconUrl = await uploadIcon();
+    } catch {
+      setError("アイコンのアップロードに失敗しました");
+      setLoading(false);
+      return;
+    }
+
     const { error: nickError } = await supabase
       .from("users")
-      .update({ nickname: nickname.trim() })
+      .update({ nickname: nickname.trim(), icon_url: newIconUrl })
       .eq("id", userId);
 
     if (nickError) { setError("保存に失敗しました"); setLoading(false); return; }
 
-    // Replace oshi
     await supabase.from("user_oshi").delete().eq("user_id", userId);
     if (oshiIds.length > 0) {
       await supabase.from("user_oshi").insert(
@@ -72,6 +108,40 @@ export default function ProfileEditForm({
       <h2 className="text-base font-bold mb-4">プロフィールを編集</h2>
 
       <div className="flex flex-col gap-4">
+        {/* Avatar */}
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 group"
+            style={{ background: "var(--ff-accent)" }}
+          >
+            {iconPreview ? (
+              <img src={iconPreview} alt="アイコン" className="w-full h-full object-cover" />
+            ) : (
+              <span className="w-full h-full flex items-center justify-center text-2xl font-bold text-white">
+                {nickname[0] || "?"}
+              </span>
+            )}
+            <div
+              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: "rgba(0,0,0,0.45)" }}
+            >
+              <span className="text-white text-xs font-medium">変更</span>
+            </div>
+          </button>
+          <p className="text-xs" style={{ color: "var(--ff-muted)" }}>
+            タップして画像を選択（5MB以内）
+          </p>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleIconChange}
+          />
+        </div>
+
         <div>
           <label className="text-sm font-medium block mb-1">ニックネーム</label>
           <input
