@@ -109,7 +109,7 @@ async function main() {
         } else {
           const events = await scrapeEBiDAN(ebidanNameMap);
           for (const ev of events) {
-            await supabase.from("events").upsert(
+            const { error } = await supabase.from("events").upsert(
               {
                 artist_id: ev.artistId,
                 type: ev.type,
@@ -121,7 +121,9 @@ async function main() {
               },
               { onConflict: "artist_id,event_date,title" }
             );
+            if (error) console.error(`[EBIDAN] upsert error:`, error.message);
           }
+          console.log(`[EBIDAN] saved ${events.length} events`);
         }
       } else if (["TWICE_NEWS", "ENHYPEN_NEWS", "TWS_NEWS", "BOYNEXTDOOR_NEWS"].includes(target.site_name)) {
         const siteToArtist: Record<string, { name: string; type: "twice" | "hybe-jp" }> = {
@@ -143,7 +145,7 @@ async function main() {
           };
           const events = await scrapeKpop([kpopTarget]);
           for (const ev of events) {
-            await supabase.from("events").upsert(
+            const { error } = await supabase.from("events").upsert(
               {
                 artist_id: ev.artistId,
                 type: ev.type,
@@ -155,7 +157,9 @@ async function main() {
               },
               { onConflict: "artist_id,event_date,title" }
             );
+            if (error) console.error(`[${target.site_name}] upsert error:`, error.message);
           }
+          console.log(`[${target.site_name}] saved ${events.length} events`);
         }
       } else {
         console.log(`[${target.site_name}] no parser implemented yet`);

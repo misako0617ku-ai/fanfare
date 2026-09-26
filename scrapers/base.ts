@@ -80,8 +80,9 @@ export async function scrapeTarget(siteKey: string, url: string, parse: ParseFn)
   console.log(`[${siteKey}] parsed ${events.length} events`);
 
   // Upsert events
+  let saved = 0;
   for (const ev of events) {
-    await supabase.from("events").upsert(
+    const { error } = await supabase.from("events").upsert(
       {
         artist_id: ev.artistId,
         type: ev.type,
@@ -93,7 +94,10 @@ export async function scrapeTarget(siteKey: string, url: string, parse: ParseFn)
       },
       { onConflict: "artist_id,event_date,title" }
     );
+    if (error) console.error(`[${siteKey}] upsert error:`, error.message);
+    else saved++;
   }
+  console.log(`[${siteKey}] saved ${saved}/${events.length} events`);
 
   const newEtag = response.headers.get("etag");
   await supabase.from("scrape_targets").update({
