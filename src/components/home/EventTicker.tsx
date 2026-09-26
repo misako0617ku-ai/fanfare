@@ -44,28 +44,49 @@ export default function EventTicker({ userId }: { userId: string }) {
   async function loadEvents() {
     const supabase = createClient();
 
-    // 今日以降の直近イベントを最大20件取得
-    const today = new Date().toISOString().split("T")[0];
+    // 推しアーティストを取得
+    const { data: oshiData } = await supabase
+      .from("user_oshi")
+      .select("artist_id")
+      .eq("user_id", userId);
+    const oshiIds = (oshiData ?? []).map((r) => r.artist_id);
 
-    const { data } = await supabase
+    // 90日前〜180日後（開催中ツアーも含む）
+    const from = new Date();
+    from.setDate(from.getDate() - 90);
+    const fromStr = from.toISOString().split("T")[0];
+    const to = new Date();
+    to.setDate(to.getDate() + 180);
+    const toStr = to.toISOString().split("T")[0];
+
+    let query = supabase
       .from("events")
       .select("id, title, event_date, type, source_url, artists(name)")
       .eq("status", "published")
-      .gte("event_date", today)
+      .gte("event_date", fromStr)
+      .lte("event_date", toStr)
       .order("event_date", { ascending: true })
-      .limit(20);
+      .limit(30);
+
+    if (oshiIds.length > 0) {
+      query = query.in("artist_id", oshiIds);
+    }
+
+    const { data } = await query;
     setEvents((data ?? []) as TickerEvent[]);
   }
 
   if (events.length === 0) return null;
 
   const ev = events[current];
+  const today = new Date().toISOString().split("T")[0];
+  const isOngoing = ev.event_date < today;
   const daysUntil = Math.ceil(
-    (new Date(ev.event_date).getTime() - new Date().setHours(0, 0, 0, 0)) /
+    (new Date(ev.event_date).getTime() - new Date(today).getTime()) /
       (1000 * 60 * 60 * 24)
   );
 
-  const label =
+  const label = isOngoing ? "開催中" :
     daysUntil === 0 ? "今日" :
     daysUntil === 1 ? "明日" :
     daysUntil <= 7 ? `${daysUntil}日後` :

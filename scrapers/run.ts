@@ -5,6 +5,7 @@ import { scrapeTarget, sleep, INTER_SITE_DELAY_MS } from "./base";
 import { parseStartoLivePage, setArtistIdMap } from "./starto";
 import { parseBEFirstNewsPage, parseMazzelNewsPage } from "./bmsg";
 import { scrapeEBiDAN } from "./ebidan";
+import { scrapeKpop, type KpopTarget } from "./kpop";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,6 +57,16 @@ async function main() {
     (ebidanArtists ?? []).map((a) => [a.name, a.id])
   );
 
+  // K-POP artist IDs by name
+  const kpopArtistNames = ["TWICE", "ENHYPEN", "TWS", "BOYNEXTDOOR"];
+  const { data: kpopArtists } = await supabase
+    .from("artists")
+    .select("id, name")
+    .in("name", kpopArtistNames);
+  const kpopNameMap = new Map<string, string>(
+    (kpopArtists ?? []).map((a) => [a.name, a.id])
+  );
+
   const { data: targets } = await supabase
     .from("scrape_targets")
     .select("site_name, url, is_enabled")
@@ -84,6 +95,40 @@ async function main() {
           console.log("[EBIDAN] no artists in DB, skipping");
         } else {
           const events = await scrapeEBiDAN(ebidanNameMap);
+          for (const ev of events) {
+            await supabase.from("events").upsert(
+              {
+                artist_id: ev.artistId,
+                type: ev.type,
+                event_date: ev.eventDate,
+                title: ev.title,
+                source_url: ev.sourceUrl ?? null,
+                source: "scrape",
+                status: "published",
+              },
+              { onConflict: "artist_id,event_date,title" }
+            );
+          }
+        }
+      } else if (["TWICE_NEWS", "ENHYPEN_NEWS", "TWS_NEWS", "BOYNEXTDOOR_NEWS"].includes(target.site_name)) {
+        const siteToArtist: Record<string, { name: string; type: "twice" | "hybe-jp" }> = {
+          TWICE_NEWS:       { name: "TWICE",       type: "twice" },
+          ENHYPEN_NEWS:     { name: "ENHYPEN",     type: "hybe-jp" },
+          TWS_NEWS:         { name: "TWS",         type: "hybe-jp" },
+          BOYNEXTDOOR_NEWS: { name: "BOYNEXTDOOR", type: "hybe-jp" },
+        };
+        const mapping = siteToArtist[target.site_name];
+        const artistId = kpopNameMap.get(mapping.name);
+        if (!artistId) {
+          console.log(`[${target.site_name}] artist not in DB`);
+        } else {
+          const kpopTarget: KpopTarget = {
+            siteName: target.site_name,
+            url: target.url,
+            artistId,
+            type: mapping.type,
+          };
+          const events = await scrapeKpop([kpopTarget]);
           for (const ev of events) {
             await supabase.from("events").upsert(
               {
