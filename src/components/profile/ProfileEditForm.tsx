@@ -109,9 +109,8 @@ export default function ProfileEditForm({
       <div className="flex flex-col gap-4">
         {/* Avatar */}
         <div className="flex flex-col items-center gap-2">
-          <label
-            htmlFor="avatar-upload"
-            className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 group cursor-pointer"
+          <div
+            className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 group"
             style={{ background: "var(--ff-accent)" }}
           >
             {iconPreview ? (
@@ -122,19 +121,18 @@ export default function ProfileEditForm({
               </span>
             )}
             <div
-              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity"
+              className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity"
               style={{ background: "rgba(0,0,0,0.45)" }}
             >
               <span className="text-white text-xs font-medium">変更</span>
             </div>
             <input
-              id="avatar-upload"
               type="file"
               accept="image/*"
-              className="hidden"
               onChange={handleIconChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-          </label>
+          </div>
           <p className="text-xs" style={{ color: "var(--ff-muted)" }}>
             タップして画像を選択（5MB以内）
           </p>
