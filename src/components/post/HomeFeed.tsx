@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import PostCard from "./PostCard";
 import EventTicker from "@/components/home/EventTicker";
+import UpcomingEvents from "@/components/home/UpcomingEvents";
 import type { Tables } from "@/types/database";
 
 type Tab = "oshi" | "follow" | "discover";
@@ -119,6 +120,9 @@ export default function HomeFeed({
     <div>
       {/* Event Ticker */}
       <EventTicker userId={userId} />
+
+      {/* Upcoming Events Section */}
+      <UpcomingEvents userId={userId} />
 
       {/* Tabs */}
       <div
