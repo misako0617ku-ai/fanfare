@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 import { createClient } from "@supabase/supabase-js";
 import { scrapeTarget, sleep, INTER_SITE_DELAY_MS } from "./base";
-import { parseStartoLivePage, setArtistIdMap } from "./starto";
+import { parseStartoLivePage, parseStartoNewsPage, setArtistIdMap } from "./starto";
 import { parseBEFirstNewsPage, parseMazzelNewsPage } from "./bmsg";
 import { scrapeEBiDAN } from "./ebidan";
 import { scrapeKpop, type KpopTarget } from "./kpop";
@@ -40,6 +40,15 @@ async function main() {
   const artistMap = await loadArtistIdMap();
   console.log(`Loaded ${artistMap.size} STARTO artists`);
   setArtistIdMap(artistMap);
+
+  // STARTO artist name → DB ID map (for news page matching)
+  const { data: startoArtists } = await supabase
+    .from("artists")
+    .select("id, name")
+    .eq("agency", "STARTO");
+  const startoNameMap = new Map<string, string>(
+    (startoArtists ?? []).map((a) => [a.name, a.id])
+  );
 
   const beFirstId = await loadArtistIdByName("BE:FIRST");
   const mazzelId = await loadArtistIdByName("MAZZEL");
@@ -82,6 +91,10 @@ async function main() {
     try {
       if (target.site_name === "STARTO_LIVE") {
         await scrapeTarget(target.site_name, target.url, parseStartoLivePage);
+      } else if (target.site_name === "STARTO_NEWS") {
+        await scrapeTarget(target.site_name, target.url, (html) =>
+          parseStartoNewsPage(html, startoNameMap)
+        );
       } else if (target.site_name === "BEFIRST_NEWS" && beFirstId) {
         await scrapeTarget(target.site_name, target.url, (html) =>
           parseBEFirstNewsPage(html, beFirstId)
