@@ -156,11 +156,21 @@ function AddStampButton({
   onToggle: (stampId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ bottom: 0, left: 0 });
+  const btnRef = useState<HTMLButtonElement | null>(null);
+
+  function handleOpen(e: React.MouseEvent<HTMLButtonElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const popupWidth = 200;
+    const left = Math.min(rect.left, window.innerWidth - popupWidth - 8);
+    setPos({ bottom: window.innerHeight - rect.top + 4, left: Math.max(8, left) });
+    setOpen((p) => !p);
+  }
 
   return (
-    <div className="relative">
+    <>
       <button
-        onClick={() => setOpen((p) => !p)}
+        onClick={handleOpen}
         className="flex items-center justify-center w-8 h-7 rounded-full text-sm"
         style={{ background: "var(--ff-border)", color: "var(--ff-muted)" }}
         aria-label="スタンプを追加"
@@ -170,13 +180,16 @@ function AddStampButton({
 
       {open && (
         <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-          />
-          <div
-            className="absolute bottom-9 left-0 z-50 p-2 rounded-xl shadow-lg grid grid-cols-4 gap-1"
-            style={{ background: "var(--ff-surface)", border: "1px solid var(--ff-border)" }}
+            className="fixed z-50 p-2 rounded-xl shadow-lg grid grid-cols-4 gap-1"
+            style={{
+              bottom: pos.bottom,
+              left: pos.left,
+              width: 200,
+              background: "var(--ff-bg)",
+              border: "1px solid var(--ff-border)",
+            }}
           >
             {stamps.map((s) => (
               <button
@@ -195,6 +208,6 @@ function AddStampButton({
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }
