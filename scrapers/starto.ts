@@ -75,14 +75,33 @@ export function parseStartoNewsPage(
     const tagClass = $(el).find(".c-tag").attr("class") ?? "";
     if (!NEWS_TARGET_TAGS.some((t) => tagClass.includes(t))) return;
 
-    const dateText = $(el).find(".c-date").first().text().trim();
-    const dates = parseAllDates(dateText);
-    if (dates.length === 0) return;
-    const eventDate = dates[0];
-    if (eventDate < cutoffStr) return;
+    const postDateText = $(el).find(".c-date").first().text().trim();
+    const postDates = parseAllDates(postDateText);
+    if (postDates.length === 0) return;
+    if (postDates[0] < cutoffStr) return;
 
     const title = $(el).find(".c-ttl-2").first().text().trim();
     if (!title) return;
+
+    // タイトルから実際のイベント日付を抽出（例：「11月18日(水)」「2026年11月18日」）
+    const currentYear = new Date().getFullYear();
+    const titleDateMatch =
+      title.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/) ||
+      title.match(/(\d{1,2})月(\d{1,2})日/);
+    let eventDate = postDates[0]; // デフォルトは投稿日
+    if (titleDateMatch) {
+      if (titleDateMatch.length === 4) {
+        // YYYY年MM月DD日
+        eventDate = `${titleDateMatch[1]}-${titleDateMatch[2].padStart(2,"0")}-${titleDateMatch[3].padStart(2,"0")}`;
+      } else {
+        // MM月DD日（年は現在年か翌年を判定）
+        const m = parseInt(titleDateMatch[1]);
+        const d = parseInt(titleDateMatch[2]);
+        const nowMonth = new Date().getMonth() + 1;
+        const year = m < nowMonth - 2 ? currentYear + 1 : currentYear;
+        eventDate = `${year}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      }
+    }
 
     // source_url: external link or starto.jp internal
     const href = $(el).find("a").first().attr("href") ?? "";

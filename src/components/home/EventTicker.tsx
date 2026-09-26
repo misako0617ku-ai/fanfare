@@ -44,13 +44,6 @@ export default function EventTicker({ userId }: { userId: string }) {
   async function loadEvents() {
     const supabase = createClient();
 
-    // 推しアーティストを取得
-    const { data: oshiData } = await supabase
-      .from("user_oshi")
-      .select("artist_id")
-      .eq("user_id", userId);
-    const oshiIds = (oshiData ?? []).map((r) => r.artist_id);
-
     // 90日前〜180日後（開催中ツアーも含む）
     const from = new Date();
     from.setDate(from.getDate() - 90);
@@ -59,20 +52,16 @@ export default function EventTicker({ userId }: { userId: string }) {
     to.setDate(to.getDate() + 180);
     const toStr = to.toISOString().split("T")[0];
 
-    let query = supabase
+    // 全アーティストのイベントを取得（推しフィルタなし）
+    const { data } = await supabase
       .from("events")
       .select("id, title, event_date, type, source_url, artists(name)")
       .eq("status", "published")
       .gte("event_date", fromStr)
       .lte("event_date", toStr)
       .order("event_date", { ascending: true })
-      .limit(30);
+      .limit(50);
 
-    if (oshiIds.length > 0) {
-      query = query.in("artist_id", oshiIds);
-    }
-
-    const { data } = await query;
     setEvents((data ?? []) as TickerEvent[]);
   }
 
