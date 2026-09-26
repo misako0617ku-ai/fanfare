@@ -57,15 +57,15 @@ export default function ProfileEditForm({
 
   async function uploadIcon(): Promise<string | null> {
     if (!iconFile) return iconUrl;
-    const res = await fetch("/api/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mimeType: iconFile.type, sizeBytes: iconFile.size, prefix: "avatars" }),
-    });
-    const { url, publicUrl, error: urlError } = await res.json();
-    if (urlError) throw new Error(urlError);
-    await fetch(url, { method: "PUT", body: iconFile, headers: { "Content-Type": iconFile.type } });
-    return publicUrl;
+    const supabase = createClient();
+    const ext = iconFile.type.split("/")[1].replace("jpeg", "jpg");
+    const path = `${userId}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, iconFile, { contentType: iconFile.type, upsert: true });
+    if (uploadError) throw uploadError;
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    return data.publicUrl;
   }
 
   async function handleSave() {
