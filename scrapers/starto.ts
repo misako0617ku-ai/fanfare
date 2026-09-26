@@ -7,10 +7,10 @@ export function setArtistIdMap(map: Map<number, string>) {
   artistIdMap = map;
 }
 
-function parseDate(dateText: string): string | null {
-  const match = dateText.trim().match(/(\d{4})\.(\d{2})\.(\d{2})/);
-  if (!match) return null;
-  return `${match[1]}-${match[2]}-${match[3]}`;
+function parseAllDates(dateText: string): string[] {
+  return [...dateText.trim().matchAll(/(\d{4})\.(\d{2})\.(\d{2})/g)].map(
+    (m) => `${m[1]}-${m[2]}-${m[3]}`
+  );
 }
 
 function parseType(tagClass: string): ScrapedEvent["type"] {
@@ -20,14 +20,10 @@ function parseType(tagClass: string): ScrapedEvent["type"] {
   return "other";
 }
 
-function isUpcoming(dateStr: string): boolean {
-  const today = new Date().toISOString().split("T")[0];
-  return dateStr >= today;
-}
-
 export function parseStartoLivePage(html: string): ScrapedEvent[] {
   const $ = cheerio.load(html);
   const events: ScrapedEvent[] = [];
+  const today = new Date().toISOString().split("T")[0];
 
   $(".p-in_cs__list-item").each((_, el) => {
     const link = $(el).find("a.c-cs_card");
@@ -35,9 +31,12 @@ export function parseStartoLivePage(html: string): ScrapedEvent[] {
     const sourceUrl = href ? `https://starto.jp${href.split("?")[0]}` : undefined;
 
     const dateText = $(el).find(".c-cs_card__date .c-date").first().text().trim();
-    const eventDate = parseDate(dateText);
-    if (!eventDate) return;
-    if (!isUpcoming(eventDate)) return;
+    const dates = parseAllDates(dateText);
+    if (dates.length === 0) return;
+
+    const eventDate = dates[0];
+    const endDate = dates[dates.length - 1];
+    if (endDate < today) return;
 
     const title = $(el).find(".c-ttl-2").first().text().trim();
     if (!title) return;
