@@ -68,7 +68,7 @@ export function parseStartoNewsPage(
   const $ = cheerio.load(html);
   const events: ScrapedEvent[] = [];
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 7); // 1週間以内のニュースのみ
+  cutoff.setDate(cutoff.getDate() - 30); // 30日以内のニュース
   const cutoffStr = cutoff.toISOString().split("T")[0];
 
   $(".p-in_news__list-item, li.p-in_news__list-item, .p-in_news li").each((_, el) => {

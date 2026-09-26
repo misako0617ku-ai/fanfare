@@ -91,7 +91,7 @@ async function main() {
     try {
       if (target.site_name === "STARTO_LIVE") {
         await scrapeTarget(target.site_name, target.url, parseStartoLivePage);
-      } else if (target.site_name === "STARTO_NEWS") {
+      } else if (["STARTO_NEWS", "STARTO_EVENT", "STARTO_CONCERT"].includes(target.site_name)) {
         await scrapeTarget(target.site_name, target.url, (html) =>
           parseStartoNewsPage(html, startoNameMap)
         );
