@@ -30,12 +30,21 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
         <div className="flex items-center gap-2">
           <Link href={`/profile/${user.id}`}>
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-              style={{ background: "var(--ff-accent)" }}
-            >
-              {profile?.nickname?.[0] ?? "？"}
-            </div>
+            {profile?.icon_url ? (
+              <img
+                src={profile.icon_url}
+                alt={profile.nickname ?? ""}
+                className="w-7 h-7 rounded-full object-cover"
+                style={{ borderRadius: "9999px" }}
+              />
+            ) : (
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: "var(--ff-accent)" }}
+              >
+                {profile?.nickname?.[0] ?? "？"}
+              </div>
+            )}
           </Link>
           <LogoutButton />
         </div>
