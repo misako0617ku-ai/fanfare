@@ -7,9 +7,14 @@ import { parseBEFirstNewsPage, parseMazzelNewsPage } from "./bmsg";
 import { scrapeEBiDAN } from "./ebidan";
 import { scrapeKpop, type KpopTarget } from "./kpop";
 
+// anon key for reads; service role key for writes
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 async function loadArtistIdMap(): Promise<Map<number, string>> {
@@ -109,7 +114,7 @@ async function main() {
         } else {
           const events = await scrapeEBiDAN(ebidanNameMap);
           for (const ev of events) {
-            const { error } = await supabase.from("events").upsert(
+            const { error } = await supabaseAdmin.from("events").upsert(
               {
                 artist_id: ev.artistId,
                 type: ev.type,
@@ -145,7 +150,7 @@ async function main() {
           };
           const events = await scrapeKpop([kpopTarget]);
           for (const ev of events) {
-            const { error } = await supabase.from("events").upsert(
+            const { error } = await supabaseAdmin.from("events").upsert(
               {
                 artist_id: ev.artistId,
                 type: ev.type,

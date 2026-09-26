@@ -7,9 +7,14 @@ if (typeof globalThis.WebSocket === "undefined") {
   (globalThis as any).WebSocket = WebSocket;
 }
 
+// anon key for reads (SELECT); service role key for writes (upsert)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export interface ScrapedEvent {
@@ -82,7 +87,7 @@ export async function scrapeTarget(siteKey: string, url: string, parse: ParseFn)
   // Upsert events
   let saved = 0;
   for (const ev of events) {
-    const { error } = await supabase.from("events").upsert(
+    const { error } = await supabaseAdmin.from("events").upsert(
       {
         artist_id: ev.artistId,
         type: ev.type,
