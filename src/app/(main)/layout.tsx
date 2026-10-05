@@ -61,8 +61,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         style={{ background: "var(--ff-bg)", borderColor: "var(--ff-border)" }}
       >
         <NavItem href="/home" label="ホーム" icon="🏠" />
+        <NavItem href="/calendar" label="カレンダー" icon="📅" />
         <NavItem href="/communities" label="コミュニティ" icon="👥" />
-        <NavItem href="/communities/new" label="作成する" icon="➕" />
         <NavItem href={`/profile/${user.id}`} label="マイページ" icon="👤" />
       </nav>
     </div>
